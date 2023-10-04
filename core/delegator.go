@@ -8,7 +8,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/looplab/fsm"
 	"log"
-	"net/http"
 	"os"
 	"os/signal"
 	"sync"
@@ -117,8 +116,6 @@ func (a *ApplicationDelegate) executeApplyRegistry() (err error) {
 	if err != nil {
 		return err
 	}
-
-	http.ListenAndServe(":3000", a.rootRouter)
 
 	return
 }

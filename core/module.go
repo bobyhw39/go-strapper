@@ -1,17 +1,25 @@
 package core
 
-import "github.com/go-chi/chi/v5"
+import (
+	"github.com/bobyhw39/go-strapper/stringutils"
+	"github.com/go-chi/chi/v5"
+	"google.golang.org/grpc"
+	"log"
+	"net"
+	"net/http"
+)
 
 type Module struct {
-	options ModuleOptions
-	Router  chi.Router
+	options    ModuleOptions
+	Router     chi.Router
+	GrpcServer grpc.Server
 }
 
 type ModuleOptions struct {
 	ServiceName    string
 	ServiceVersion string
 	HttpAddress    string
-	Configuration  ModuleOptsConfig
+	GrpcAddress    *string
 }
 
 func DefaultModuleOptions() ModuleOptions {
@@ -19,18 +27,7 @@ func DefaultModuleOptions() ModuleOptions {
 		ServiceName:    "service-noname",
 		ServiceVersion: "latest",
 		HttpAddress:    ":8080",
-		Configuration: ModuleOptsConfig{
-			Path:              "environment/config.yaml",
-			EnvironmentPrefix: "newservice",
-			RootKey:           "newservice",
-		},
 	}
-}
-
-type ModuleOptsConfig struct {
-	Path              string
-	EnvironmentPrefix string
-	RootKey           string
 }
 
 func MakeModule(opts ModuleOptions) func() Module {
@@ -46,6 +43,18 @@ func MakeModule(opts ModuleOptions) func() Module {
 func (a *Module) init() {
 	router := chi.NewRouter()
 	a.Router = router
+	http.ListenAndServe(a.options.HttpAddress, a.Router)
+
+	if !stringutils.IsPointerBlank(a.options.GrpcAddress) {
+		lis, err := net.Listen("tcp", *a.options.GrpcAddress)
+		if err != nil {
+			log.Fatalf("failed to listen: %v", err)
+		}
+		if err := a.GrpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %s", err)
+		}
+	}
+
 }
 
 func DefaultModuleOptionsWithSetters(setters ...ModuleOptsSetter) ModuleOptions {
