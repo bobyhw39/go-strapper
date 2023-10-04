@@ -23,19 +23,19 @@ const (
 )
 
 type ApplicationDelegate struct {
-	rootRouter           chi.Router
 	handlerRegistries    []interfaces.HTTPHandlerRegistry
 	middlewareRegistries []interfaces.HTTPMiddlewareRegistry
 	stateMachine         *fsm.FSM
 	runners              []Runner
+	modules              *Module
 }
 
 func NewApplicationDelegate(
-	rootRouter chi.Router,
+	module *Module,
 ) *ApplicationDelegate {
 
 	app := &ApplicationDelegate{
-		rootRouter:           rootRouter,
+		modules:              module,
 		handlerRegistries:    []interfaces.HTTPHandlerRegistry{},
 		middlewareRegistries: []interfaces.HTTPMiddlewareRegistry{},
 	}
@@ -108,11 +108,11 @@ func (a *ApplicationDelegate) Run(ctx context.Context) (err error) {
 }
 
 func (a *ApplicationDelegate) executeApplyRegistry() (err error) {
-	a.rootRouter, err = a.applyMiddlewaresToRouter(a.rootRouter)
+	a.modules.Router, err = a.applyMiddlewaresToRouter(a.modules.Router)
 	if err != nil {
 		return err
 	}
-	a.rootRouter, err = a.applyRoutesToRouter(a.rootRouter)
+	a.modules.Router, err = a.applyRoutesToRouter(a.modules.Router)
 	if err != nil {
 		return err
 	}
@@ -128,10 +128,12 @@ func (a *ApplicationDelegate) startApplication(ctx context.Context) (err error) 
 
 	wg.Add(2)
 	go func(errChan chan error) {
+		a.modules.startWebServer()
 		wg.Done()
 	}(errChan)
 
 	go func(errChan chan error) {
+		a.modules.startGRPCServer()
 		wg.Done()
 	}(errChan)
 

@@ -1,12 +1,8 @@
 package core
 
 import (
-	"github.com/bobyhw39/go-strapper/stringutils"
 	"github.com/go-chi/chi/v5"
 	"google.golang.org/grpc"
-	"log"
-	"net"
-	"net/http"
 )
 
 type Module struct {
@@ -35,26 +31,13 @@ func MakeModule(opts ModuleOptions) func() Module {
 		a := Module{
 			options: opts,
 		}
-		a.init()
 		return a
 	}
 }
 
 func (a *Module) init() {
-	router := chi.NewRouter()
-	a.Router = router
-	http.ListenAndServe(a.options.HttpAddress, a.Router)
-
-	if !stringutils.IsPointerBlank(a.options.GrpcAddress) {
-		lis, err := net.Listen("tcp", *a.options.GrpcAddress)
-		if err != nil {
-			log.Fatalf("failed to listen: %v", err)
-		}
-		if err := a.GrpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %s", err)
-		}
-	}
-
+	a.startWebServer()
+	a.startGRPCServer()
 }
 
 func DefaultModuleOptionsWithSetters(setters ...ModuleOptsSetter) ModuleOptions {
