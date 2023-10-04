@@ -17,21 +17,3 @@ func ServiceAddress(address string) ModuleOptsSetter {
 		options.HttpAddress = address
 	}
 }
-
-func ServiceConfigurationPath(path string) ModuleOptsSetter {
-	return func(options *ModuleOptions) {
-		options.Configuration.Path = path
-	}
-}
-
-func ServiceConfigurationEnvPrefix(prefix string) ModuleOptsSetter {
-	return func(options *ModuleOptions) {
-		options.Configuration.EnvironmentPrefix = prefix
-	}
-}
-
-func ServiceConfigurationRootKey(rootKey string) ModuleOptsSetter {
-	return func(options *ModuleOptions) {
-		options.Configuration.RootKey = rootKey
-	}
-}
